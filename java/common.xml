@@ -25,6 +25,9 @@
   <property name="checkstyle.report.dir" value="${build.dir}/checkstyle" />
   <property name="findbugs.report.dir" value="${build.dir}/findbugs" />
   <property name="jar.file" value="${ant.project.name}.jar" />
+
+  <property name="test.build.dir" location="${build.dir}/test" />
+  <property name="test.classes.dir" location="${test.build.dir}/classes" />
   <!-- override the following if you install ivy/ant elsewhere or your svn auth details are different -->
   
   <!-- override this fileset to include extra files in the jar that gets built by build-jar -->
@@ -54,6 +57,7 @@
     <!--  put instrumented classes higher up in classpath so they will be used if available -->
     <pathelement location="${cobertura.classes.dir}" />
     <pathelement location="${classes.dir}" />
+    <pathelement location="${test.classes.dir}" />
     <path refid="compile-classpath" />
   </path>
 
@@ -71,8 +75,13 @@
     <mkdir dir="${build.dir}" />
   </target>
 
+  <target name="init.test" depends="init" description="Create dir for test compilation">
+    <mkdir dir="${test.build.dir}" />
+  </target>
+
   <target name="clean" description="Remove files and folders from previous builds">
     <delete dir="${build.dir}" />
+    <delete dir="${test.conf.dir}" />
   </target>
 
   <target name="compile" depends="compile-source" />
@@ -83,6 +92,19 @@
       <classpath refid="compile-classpath" />
     </javac>
     <echo message="Sources compiled" />
+  </target>
+
+  <target name="compile-test" depends="init.test" description="Compilet the test code">
+    <mkdir dir="${test.classes.dir}" />
+    <javac srcdir="${test.java.dir}" destdir="${test.classes.dir}" debug="true" fork="true">
+      <classpath refid="test-compile-classpath" />
+    </javac>
+  </target>
+
+  <target name="run-test" depends="compile-test" description="Run the test code" >
+    <java classname="com.dappervision.hbase.mapred.test.TablePreparation" fork="true">
+      <classpath refid="test-classpath" />
+    </java>
   </target>
 
 <!--  we assume jar is the default build target, override this if not the case -->
